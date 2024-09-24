@@ -6,6 +6,10 @@ if ! command -v xmlstarlet >/dev/null 2>&1; then
   exit 1
 fi
 
+#Source the .env file
+source $(dirname "$0")/.env
+
+#Send message to ntfy
 ntfy_message() {
   cat <<EOF
 {
@@ -17,7 +21,7 @@ ntfy_message() {
 EOF
 }
 
-#Function to send notification through ntfy
+#Forge notification to ntfy
 send_ntfy() {
   if [ "$ntfy_password" ]; then
       curl -H "Content-Type: application/json" \
@@ -35,6 +39,7 @@ send_ntfy() {
   fi
 }
 
+#Process item from XML and send a notification if it is new
 process_item() {
   local title="$1"
   local link="$2"
@@ -47,10 +52,8 @@ process_item() {
   fi
 }
 
-#Source the .env file
-source $(dirname "$0")/.env
 
-#Fetch the RSS feeds
+#Fetch the RSS feeds and process them
 wget -qO- "https://www.konsumentverket.se/aktuellt/aterkallelser-av-varor/?format=rss" > /tmp/kv_rss.xml
 wget -qO- "https://www.livsmedelsverket.se/rss/rss-aterkallanden" > /tmp/lv_rss.xml
 
@@ -66,6 +69,7 @@ do
   process_item "$title" "$link" "$pubDate"
 done
 
+#Clean up temporary files
 rm /tmp/kv_rss.xml
 rm /tmp/lv_rss.xml
 
